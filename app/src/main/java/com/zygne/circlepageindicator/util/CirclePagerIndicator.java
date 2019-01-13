@@ -15,26 +15,40 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CirclePagerIndicator extends RecyclerView.ItemDecoration {
 
+    public static final int TYPE_CIRCLE = 0;
+    public static final int TYPE_CIRCLE_RING = 1;
+
+    private static final float DP = Resources.getSystem().getDisplayMetrics().density;
 
     private int colorActive = 0xFFFFFFFF;
     private int colorInactive = 0x66FFFFFF;
 
-    private static final float DP = Resources.getSystem().getDisplayMetrics().density;
+    private int type = TYPE_CIRCLE;
 
     private final float padding = DP * 4;
 
-    private final float radius = DP * 5;
+    private final float radiusInactive = DP * 4;
 
     private final float radiusActive = DP * 6;
 
     private final float diameter = (radiusActive * 2);
 
-    private final Paint paint = new Paint();
+    private final Paint paintFill = new Paint();
+
+    private final Paint paintStroke = new Paint();
 
     public CirclePagerIndicator() {
-        paint.setStrokeCap(Paint.Cap.ROUND);
-        paint.setStyle(Paint.Style.FILL);
-        paint.setAntiAlias(true);
+       init();
+    }
+
+    public CirclePagerIndicator(int type) {
+        init();
+
+        this.type = type;
+
+        if (this.type > TYPE_CIRCLE_RING) {
+            this.type = TYPE_CIRCLE;
+        }
     }
 
     public void setColors(int colorActive, int colorInactive) {
@@ -71,23 +85,35 @@ public class CirclePagerIndicator extends RecyclerView.ItemDecoration {
         drawHighlights(c, indicatorStartX, indicatorPosY, activePosition, itemCount);
     }
 
+    private void init(){
+        paintFill.setStrokeCap(Paint.Cap.ROUND);
+        paintFill.setStyle(Paint.Style.FILL);
+        paintFill.setAntiAlias(true);
+
+        paintStroke.setStrokeCap(Paint.Cap.ROUND);
+        paintStroke.setStrokeWidth(1);
+        paintStroke.setStyle(Paint.Style.STROKE);
+        paintStroke.setAntiAlias(true);
+    }
+
     private void drawInactiveIndicators(Canvas c, float startX, float indicatorPosY, int itemCount) {
-        paint.setColor(colorInactive);
+        paintFill.setColor(colorInactive);
 
         final float itemWidth = diameter + padding;
 
         float start = startX;
 
         for (int i = 0; i < itemCount; i++) {
-            float cx = start + radius;
+            float cx = start + radiusInactive;
             float cy = indicatorPosY;
-            c.drawCircle(cx, cy, radius, paint);
+            c.drawCircle(cx, cy, radiusInactive, paintFill);
             start += itemWidth;
         }
     }
 
     private void drawHighlights(Canvas c, float startX, float posY, int highlightPosition, int itemCount) {
-        paint.setColor(colorActive);
+        paintFill.setColor(colorActive);
+        paintStroke.setColor(colorActive);
 
         final float itemWidth = diameter + padding;
 
@@ -95,15 +121,19 @@ public class CirclePagerIndicator extends RecyclerView.ItemDecoration {
             float highlightStart = startX + itemWidth * highlightPosition;
             float cx = highlightStart + radiusActive;
             float cy = posY;
-            c.drawCircle(cx, cy, radiusActive, paint);
-        }
 
+            if (type == TYPE_CIRCLE_RING) {
+                c.drawCircle(cx, cy, radiusActive, paintStroke);
+                c.drawCircle(cx, cy, radiusInactive, paintFill);
+            } else {
+                c.drawCircle(cx, cy, radiusActive, paintFill);
+            }
+        }
     }
 
     @Override
     public void getItemOffsets(@NotNull Rect outRect, @NotNull View view, @NotNull RecyclerView parent, @NotNull RecyclerView.State state) {
         super.getItemOffsets(outRect, view, parent, state);
-        outRect.bottom = (int) radius *2;
+        outRect.bottom = (int) radiusInactive * 2;
     }
-
 }
